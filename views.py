@@ -131,17 +131,50 @@ def start():
 
 
 
+
+@app.route('/clientOAuth_Facebook')
+def start_2():
+    return render_template('clientOAuth_Facebook.html')
+
+
+
+@app.route('/testFB_cookie')
+def test_fb_cookie():
+    print request.cookies
+    #print request.cookies.get["fbsr_266475267061303"]
+    #fb_cookie = request.cookies.get("fbsr_266475267061303")
+    print fb_cookie
+    return jsonify({'fb_cookie': '%s' % fb_cookie})
+
+
+
 # this currently responds to an AJAX POST request from clientOAuth.html that, if successful, will contain an authorization code provided by Google 
 @app.route('/oauth/<provider>', methods=['POST'])
 def login(provider):
+    
     print "login endpoint CALLED!!!!!"
     #STEP 1 - Parse the auth code (this is the one-time oauth code we got if the provider parameter is set to Google)
     #auth_code = request.json.get('auth_code')
     
-    print "This is the one time oauth code we just got from Google API: %s" % request.data
-    
     auth_code = request.data
-    print "Step 1 - Complete, received auth code %s" % auth_code
+    print "Step 1 - Complete, received auth code: %s" % auth_code
+    
+    
+    if provider == 'facebook':
+        # use to see request header 
+        #print(request.headers.get)
+        FB_authorized_response = request.data
+        # converting JSON.stringify(authPackage) to dict with json.loads so it is not just a string that looks like JSON
+        FB_authorized_response = json.loads(FB_authorized_response)
+        
+        # make FB authorized response dict
+        fb_access_code = FB_authorized_response["fb_access_code"]
+        fb_user_name = FB_authorized_response["user_info"]["name"]
+        fb_user_id = FB_authorized_response["user_info"]["id"]
+        Facebook_OAuth_response = {'Facebook_access_code': fb_access_code, 'Facebook_username': fb_user_name, 'Facebook_user_id': fb_user_id}
+        print(Facebook_OAuth_response)
+        return jsonify(Facebook_OAuth_response)
+    
     if provider == 'google':
         #STEP 2 - Exchange for a token
         try:
@@ -160,19 +193,20 @@ def login(provider):
         url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s' % access_token)
         h = httplib2.Http()
         result = json.loads(h.request(url, 'GET')[1])
+        
         # If there was an error in the access token info, abort.
         if result.get('error') is not None:
             response = make_response(json.dumps(result.get('error')), 500)
             response.headers['Content-Type'] = 'application/json'
             
-        # # Verify that the access token is used for the intended user.
+        # Verify that the access token is used for the intended user.
         gplus_id = credentials.id_token['sub']
         if result['user_id'] != gplus_id:
             response = make_response(json.dumps("Token's user ID doesn't match given user ID."), 401)
             response.headers['Content-Type'] = 'application/json'
             return response
 
-        # # Verify that the access token is valid for this app.
+        # Verify that the access token is valid for this app.
         if result['issued_to'] != CLIENT_ID:
             response = make_response(json.dumps("Token's client ID does not match app's."), 401)
             response.headers['Content-Type'] = 'application/json'
