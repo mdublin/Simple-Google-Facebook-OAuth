@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+</head>
+<body>
+
+<h1>Authentication via Twitter Sign in</h1>
+<br></br>
+<table>
+	<tbody>
+		<tr>
+			<td>Sign in with Twitter (button style)</td>
+			<td>
+			
+				<!-- not using AJAX method with Twitter sign in button because when the AJAX POST request hits the Flask /login endpoint, and attempts to redirect the user to the https://api.twitter.com/oauth/authorize?oauth_token={token recieved from twitter API} after successfully getting the request code from the Twitter API, we get a CORS error in the browser console: 
+			Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://api.twitter.com/oauth/authorize?oauth_token=hVBXqwAAAAAAwNZ0. (Reason: CORS header 'Access-Control-Allow-Origin' missing).
+
+
+			<img src="https://g.twimg.com/dev/sites/default/files/images_documentation/sign-in-with-twitter-gray.png" alt="Sign in with Twitter" class="btn btn-lg btn-outline" onclick="RequestSignIn()">
+		</td> --!>
+
+		<!-- See here for more info:
+		
+		https://twittercommunity.com/t/no-cors-support-for-upload-twitter-com/55453
+
+		http://stackoverflow.com/questions/31487379/flask-cors-no-access-control-allow-origin-header-present-on-a-redirect
+
+		As of the date of this writing, Twitter does not support CORS, so apparently we can not use a browser to talk directly to the Twitter API. Also, apparently it is possible to use hacky workarounds, like JSONP to get around corss-domain policies in web browsers. 
+		
+		http://stackoverflow.com/questions/3839966/can-anyone-explain-what-jsonp-is-in-layman-terms
+
+		--!>
+		
+			
+			<td><a href="{{ url_for('login', provider='twitter') }}"><img src="https://g.twimg.com/dev/sites/default/files/images_documentation/sign-in-with-twitter-gray.png" alt="Sign in with Twitter" class="btn btn-lg btn-outline"></a></td>
+		</tr>
+	</tbody>
+</table>
+
+<!-- not using this function 
+<script>
+
+	function RequestSignIn(){
+		alert("called");
+		
+		var oReq = new XMLHttpRequest();
+		oReq.open("POST", "/oauth/twitter", true);
+		oReq.send();
+		oReq.onload = function() {
+		if (oReq.status == 200){
+			console.log("oReq.status OK");
+		} else {
+			console.log("An error occured " + oReq.status);
+		}	
+	};
+
+
+
+
+
+	}
+
+</script> 
+
+--!>
+
+</body>
+
+<! -- onclick make POST with request token to https://api.twitter.com/oauth/request_token --!>
+
+
