@@ -14,3 +14,9 @@ Add the `client_ID` to the JS in the clientOAuth_Google.html view.
 
 
 
+
+TO RUN USING Gunicorn:
+
+`$ gunicorn views:app -p views.txt -b localhost:8000`
+
+
