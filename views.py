@@ -2,7 +2,7 @@ from models import Base, User
 from flask import Flask, jsonify, request, url_for, abort, g, render_template, redirect
 
 # Flask-Cors
-from flask_cors import CORS, cross_origin
+#from flask_cors import CORS, cross_origin
 
 #from flask.ext.session import Session
 # had to Google this, it's not included in the "solution code"
@@ -18,6 +18,8 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 
 # rauth for handling Twitter OAuth 1.0 requirements
 from rauth import OAuth1Service
+# importing our Twitter OAuth1 module
+import Twitter_OAuth1
 
 import json
 
@@ -30,11 +32,8 @@ from flask import make_response
 import requests
 import os
 
-#secret_key = os.environ.get("secret_key")
-# print secret_key
 
 auth = HTTPBasicAuth()
-
 
 engine = create_engine('sqlite:///usersWithOAuth.db')
 
@@ -45,13 +44,13 @@ session = DBSession()
 app = Flask(__name__)
 
 # initializing Flask-Cors extension with default arguments to allow CORS
-# add domains on all routes
-CORS(app)
+# support on on all routes, for all origins and methods.
+#CORS(app)
 
 
 # not-so-secret_key for sessions, which requires a secret key
 # would need to export as environment variable for production
-app.secret_key = 'A0Zr98j/3yXR~XHH!jmN]LWX/,?RT'
+app.secret_key = ### SOME SECRET ENVIRONMENT KEY ####
 
 
 CLIENT_ID = json.loads(
@@ -63,25 +62,6 @@ CLIENT_ID = json.loads(
 # the fields in the http header can be used to transport any type of
 # authentication info, for token based auth, the token can be sent as
 # username and the password can be ignored.
-
-'''
-@auth.verify_password
-def verify_password(username_or_token, password):
-    print "verify_password CALLED!!!!!!!!"
-    print username_or_token
-    print password
-    #Try to see if username_or_token is a token first (see this callback in models.py)
-    user_id = User.verify_auth_token(username_or_token)
-    if user_id:
-        user = session.query(User).filter_by(id = user_id).one()
-    else:
-        user = session.query(User).filter_by(username = username_or_token).first()
-        if not user or not user.verify_password(password):
-            return False
-    g.user = user
-    return True
-
-'''
 
 
 # test for serialized string in Cookie stored in session={serialized data structure containing access token}
@@ -114,9 +94,9 @@ def verify_password(username_or_token, password):
     return True
 
 
-@app.route('/clientOAuth')
+@app.route('/clientOAuth_Google')
 def start():
-    return render_template('clientOAuth.html')
+    return render_template('clientOAuth_Google.html')
 
 
 # Login via Facebook Authentication
@@ -134,8 +114,6 @@ def start_3():
 @app.route('/testFB_cookie')
 def test_fb_cookie():
     print request.cookies
-    # print request.cookies.get["fbsr_266475267061303"]
-    #fb_cookie = request.cookies.get("fbsr_266475267061303")
     print fb_cookie
     return jsonify({'fb_cookie': '%s' % fb_cookie})
 
@@ -184,27 +162,12 @@ def login(provider):
 
     # TWITTER
     if (provider == "twitter") and (request.method == 'GET'):
-        # fetch request token, Twitter generates request token, if 200 ok,
-        # Twitter returns oauth_token, oauth_token_secret, and
-        # oauth_callback_confirmed
-        twitter = OAuth1Service(
-            consumer_key={ADD CONSUMER KEY},
-            consumer_secret={ADD CONSUMER SECRET},
-            name='twitter',
-            access_token_url='https://api.twitter.com/oauth/access_token',
-            authorize_url='https://api.twitter.com/oauth/authorize',
-            request_token_url='https://api.twitter.com/oauth/request_token',
-            base_url='https://api.twitter.com/1/')
+        get_request_token = Twitter_OAuth1.request_access_token()
+        get_oauth_token = get_request_token.split("&")
+        get_oauth_token = get_oauth_token[0]
+        oauth_authenticate_redirect = "https://api.twitter.com/oauth/authenticate?%s" % get_oauth_token
+        return redirect(oauth_authenticate_redirect)
 
-        request_token, request_token_secret = twitter.get_request_token()
-        print request_token
-
-        print "THIS IS twitter request_token: %s" % request_token
-        print "THIS IS twitter request_token_secret: %s" % request_token_secret
-
-        authorize_url = twitter.get_authorize_url(request_token)
-        print "authorize_url: " + authorize_url
-        return redirect(authorize_url)
 
     # GOOGLE
     if provider == 'google':
