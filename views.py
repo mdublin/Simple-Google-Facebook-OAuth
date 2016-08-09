@@ -32,8 +32,11 @@ from flask import make_response
 import requests
 import os
 
+#secret_key = os.environ.get("secret_key")
+# print secret_key
 
 auth = HTTPBasicAuth()
+
 
 engine = create_engine('sqlite:///usersWithOAuth.db')
 
@@ -50,7 +53,7 @@ app = Flask(__name__)
 
 # not-so-secret_key for sessions, which requires a secret key
 # would need to export as environment variable for production
-app.secret_key = ### SOME SECRET ENVIRONMENT KEY ####
+app.secret_key = 'A0Zr98j/3yXR~XHH'
 
 
 CLIENT_ID = json.loads(
@@ -111,9 +114,22 @@ def start_3():
     return render_template('clientOAuth_Twitter.html')
 
 
+@app.route('/Twitter_callback')
+def twitter_callback():
+    try:
+        callback_param_oauth_token = request.args.get('oauth_token')
+        callback_param_oauth_verifier = request.args.get('oauth_verifier')
+        return render_template('twitter_callback.html', callback_param_oauth_token=callback_param_oauth_token, callback_param_oauth_verifier=callback_param_oauth_verifier)
+    except KeyError:
+        return("Something went wrong with the Twitter Authentication, missing oauth_token and oauth_verifier parms in URL")
+
+
+
 @app.route('/testFB_cookie')
 def test_fb_cookie():
     print request.cookies
+    # print request.cookies.get["fbsr_266475267061303"]
+    #fb_cookie = request.cookies.get("fbsr_266475267061303")
     print fb_cookie
     return jsonify({'fb_cookie': '%s' % fb_cookie})
 
@@ -162,8 +178,10 @@ def login(provider):
 
     # TWITTER
     if (provider == "twitter") and (request.method == 'GET'):
+        # calling our Twitter_OAuth1 module that composes all of the necessary elements for making the initial POST request to Twitter API to get inital request access token
         get_request_token = Twitter_OAuth1.request_access_token()
         get_oauth_token = get_request_token.split("&")
+        print(get_oauth_token)
         get_oauth_token = get_oauth_token[0]
         oauth_authenticate_redirect = "https://api.twitter.com/oauth/authenticate?%s" % get_oauth_token
         return redirect(oauth_authenticate_redirect)
