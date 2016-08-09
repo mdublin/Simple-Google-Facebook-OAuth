@@ -13,7 +13,9 @@ Download the client_secret.json file from the OAuth 2.0 client IDs section.
 Add the `client_ID` to the JS in the clientOAuth_Google.html view.
 
 
+Regarding Twitter OAuth 1.0 flow:
 
+1. In your Twitter dev account, in the Settings tab in Application Management for your registered app, make sure you have put in a valid callback URL (it cannot just be localhost, etc) but do not check the `Enable Callback Locking` box. Leaving this unchecked will allow you to use your localhostaddress the app is currently running on as a callback URL that is specified/included in the signature creation process and inital Authorization Header reqeust to get the request token. 
 
 TO RUN USING Gunicorn:
 
