@@ -14,6 +14,8 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(32), index=True)
     picture = Column(String)
+    twitter_user_id = Column(String(32))
+    fb_user_id = Column(String(32))
     email = Column(String)
     password_hash = Column(String(64))
 

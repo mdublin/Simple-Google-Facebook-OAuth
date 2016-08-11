@@ -133,17 +133,13 @@ def twitter_callback():
         print(access_token_response_package)
 
         if access_token_response_package:
-            print "INSIDE if"
-        # see if user exists, if it doesn't make a new one
-            user = session.query(User).filter_by(username=access_token_response_package["screen_name"]).first()
-            print(user)
+        # see if user (in this case, Twitter user_id) exists, if it doesn't make a new one
+            user = session.query(User).filter_by(twitter_user_id=access_token_response_package["user_id"]).first()
             
             if not user:
-                print "INSIDE if not user"
-                user = User(username=access_token_response_package["screen_name"])
+                user = User(twitter_user_id=access_token_response_package["user_id"])
                 session.add(user)
                 session.commit()
-                print "session.commit() happened!!!!"
                 return render_template('twitter_callback.html', user_name=access_token_response_package["screen_name"])
             else:
                 return render_template('twitter_callback.html')
