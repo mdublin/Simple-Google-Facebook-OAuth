@@ -53,7 +53,7 @@ app = Flask(__name__)
 
 # not-so-secret_key for sessions, which requires a secret key
 # would need to export as environment variable for production
-app.secret_key = 'A0Zr98j/3yXR~XHH'
+app.secret_key = 'A0Zr98j/3yXR~XHH!WX/,?RT'
 
 
 CLIENT_ID = json.loads(
@@ -113,13 +113,43 @@ def start_2():
 def start_3():
     return render_template('clientOAuth_Twitter.html')
 
+# global dict used to store all items in successful access_token_response in Twitter OAuth 1.0 flow
+access_token_response_package = {}
 
 @app.route('/Twitter_callback')
 def twitter_callback():
     try:
         callback_param_oauth_token = request.args.get('oauth_token')
         callback_param_oauth_verifier = request.args.get('oauth_verifier')
-        return render_template('twitter_callback.html', callback_param_oauth_token=callback_param_oauth_token, callback_param_oauth_verifier=callback_param_oauth_verifier)
+        
+        # taking oauth_token and oauth_verifier and passing to access_token(), the function that handles the last
+        # step in the OAuth 1.0 flow
+        # if successful, this returns oauth_token, oauth_token_secret, user_id, screen_name 
+        access_token_response = Twitter_OAuth1.access_token(callback_param_oauth_token, callback_param_oauth_verifier)
+        
+        for index, item in enumerate(access_token_response):
+            separate = item.split("=")
+            access_token_response_package[separate[0]] = separate[1]
+        print(access_token_response_package)
+
+        if access_token_response_package:
+            print "INSIDE if"
+        # see if user exists, if it doesn't make a new one
+            user = session.query(User).filter_by(username=access_token_response_package["screen_name"]).first()
+            print(user)
+            
+            if not user:
+                print "INSIDE if not user"
+                user = User(username=access_token_response_package["screen_name"])
+                session.add(user)
+                session.commit()
+                print "session.commit() happened!!!!"
+                return render_template('twitter_callback.html', user_name=access_token_response_package["screen_name"])
+            else:
+                return render_template('twitter_callback.html')
+        # rendering oauth_token and oauth_verifer params contained in callback_url after successful completion of 
+        # # step 2 in the OAuth 1.0 flow
+        #return render_template('twitter_callback.html', callback_param_oauth_token=callback_param_oauth_token, callback_param_oauth_verifier=callback_param_oauth_verifier)
     except KeyError:
         return("Something went wrong with the Twitter Authentication, missing oauth_token and oauth_verifier parms in URL")
 
@@ -178,14 +208,12 @@ def login(provider):
 
     # TWITTER
     if (provider == "twitter") and (request.method == 'GET'):
-        # calling our Twitter_OAuth1 module that composes all of the necessary elements for making the initial POST request to Twitter API to get inital request access token
-        get_request_token = Twitter_OAuth1.request_access_token()
+        get_request_token = Twitter_OAuth1.request_token()
         get_oauth_token = get_request_token.split("&")
         print(get_oauth_token)
         get_oauth_token = get_oauth_token[0]
         oauth_authenticate_redirect = "https://api.twitter.com/oauth/authenticate?%s" % get_oauth_token
         return redirect(oauth_authenticate_redirect)
-
 
     # GOOGLE
     if provider == 'google':
