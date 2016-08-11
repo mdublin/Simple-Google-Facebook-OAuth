@@ -48,7 +48,7 @@ app = Flask(__name__)
 
 # initializing Flask-Cors extension with default arguments to allow CORS
 # support on on all routes, for all origins and methods.
-#CORS(app)
+# CORS(app)
 
 
 # not-so-secret_key for sessions, which requires a secret key
@@ -113,42 +113,52 @@ def start_2():
 def start_3():
     return render_template('clientOAuth_Twitter.html')
 
-# global dict used to store all items in successful access_token_response in Twitter OAuth 1.0 flow
+# global dict used to store all items in successful access_token_response
+# in Twitter OAuth 1.0 flow
 access_token_response_package = {}
+
 
 @app.route('/Twitter_callback')
 def twitter_callback():
     try:
         callback_param_oauth_token = request.args.get('oauth_token')
         callback_param_oauth_verifier = request.args.get('oauth_verifier')
-        
+
         # taking oauth_token and oauth_verifier and passing to access_token(), the function that handles the last
         # step in the OAuth 1.0 flow
-        # if successful, this returns oauth_token, oauth_token_secret, user_id, screen_name 
-        access_token_response = Twitter_OAuth1.access_token(callback_param_oauth_token, callback_param_oauth_verifier)
-        
+        # if successful, this returns oauth_token, oauth_token_secret, user_id,
+        # screen_name
+        access_token_response = Twitter_OAuth1.access_token(
+            callback_param_oauth_token, callback_param_oauth_verifier)
+
         for index, item in enumerate(access_token_response):
             separate = item.split("=")
             access_token_response_package[separate[0]] = separate[1]
         print(access_token_response_package)
 
         if access_token_response_package:
-        # see if user (in this case, Twitter user_id) exists, if it doesn't make a new one
-            user = session.query(User).filter_by(twitter_user_id=access_token_response_package["user_id"]).first()
-            
+            # see if user (in this case, Twitter user_id) exists, if it doesn't
+            # make a new one
+            user = session.query(User).filter_by(
+                twitter_user_id=access_token_response_package["user_id"]).first()
+
             if not user:
-                user = User(twitter_user_id=access_token_response_package["user_id"])
+                user = User(
+                    twitter_user_id=access_token_response_package["user_id"])
                 session.add(user)
                 session.commit()
-                return render_template('twitter_callback.html', user_name=access_token_response_package["screen_name"])
+                return render_template(
+                    'twitter_callback.html',
+                    user_name=access_token_response_package["screen_name"])
             else:
                 return render_template('twitter_callback.html')
-        # rendering oauth_token and oauth_verifer params contained in callback_url after successful completion of 
+        # rendering oauth_token and oauth_verifer params contained in callback_url after successful completion of
         # # step 2 in the OAuth 1.0 flow
-        #return render_template('twitter_callback.html', callback_param_oauth_token=callback_param_oauth_token, callback_param_oauth_verifier=callback_param_oauth_verifier)
+        # return render_template('twitter_callback.html',
+        # callback_param_oauth_token=callback_param_oauth_token,
+        # callback_param_oauth_verifier=callback_param_oauth_verifier)
     except KeyError:
         return("Something went wrong with the Twitter Authentication, missing oauth_token and oauth_verifier parms in URL")
-
 
 
 @app.route('/testFB_cookie')
@@ -163,6 +173,7 @@ def test_fb_cookie():
 '''
 For login endpoint currently responds to an AJAX POST request from Facebook and Google clientOAuth.html views. Adding 'GET' to methods for /clientOAuth_Twitter, which uses a Twitter sign in button that uses jinja instead of AJAX (see comments in clientOAuth_Twitter for more info, but basically Twitter API does not support CORS, that is why we need to do everything server-side). But url_for in jinja can only send GET requests to endpoint, because all links are GET requests, right? So if we did not divert the GET request, itwould just try and render this view with /oauth/twitter like a normal view except it would return a 405 error.
 '''
+
 
 @app.route('/oauth/<provider>', methods=['GET', 'POST'])
 def login(provider):
@@ -365,7 +376,6 @@ def test_session():
     return jsonify({'access_code': '%s' % login_session['access_token']})
 
 
-
 '''
 Note of Flask cookie vs session object:
 This view allows us to attach the access_token as a cookie to the client
@@ -377,6 +387,7 @@ your cookie but not modify it, unless they know the secret key used for signing.
 session object, you need to create and use a secret_key.
 
 '''
+
 
 @app.route('/testCookie')
 def test_cookie():
@@ -428,4 +439,3 @@ if __name__ == '__main__':
     app.debug = True
     #app.config['SECRET_KEY'] = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
     app.run(host='localhost', port=5000)
-

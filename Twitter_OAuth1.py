@@ -10,7 +10,6 @@ from urllib import quote_plus
 # All key/value pairs needed for authorizing requests sent to Twitter API:
 # https://dev.twitter.com/oauth/overview/authorizing-requests
 # http://stackoverflow.com/questions/8338661/implementaion-hmac-sha1-in-python
-#
 
 # get Twitter OAuth app credentials
 with open('twitter_creds.json', 'r') as f:
@@ -50,7 +49,6 @@ def make_nonce():
 oauth_signature_method = "HMAC-SHA1"
 
 
-
 def create_signature():
     ''' just for getting request_token
     https://dev.twitter.com/oauth/overview/creating-signatures
@@ -80,7 +78,6 @@ def create_signature():
     package["oauth_version"] = oauth_version
     package["BaseURL"] = BaseURL
     package["HTTPMethod"] = HTTPMethod
-
 
     oauth_callback = "oauth_callback=%s" % oauth_callback
     parameter_string = oauth_callback + "&"
@@ -125,7 +122,6 @@ def create_signature():
     return package
 
 
-
 def timestamp():
     oauth_timestamp = time.time()
     return str(int(oauth_timestamp))
@@ -145,11 +141,6 @@ def calculate_signature(signature_base_string, signing_key):
     returns final oauth signature for the request_token
     request
     '''
-
-    # have to pass strings to hmac.new()
-    #key = str(get_signing_key())
-    #raw = str(create_sig_base("POST"))
-
     key = signing_key
     raw = signature_base_string
 
@@ -158,7 +149,6 @@ def calculate_signature(signature_base_string, signing_key):
     # output of hashed is binary string, so this needs to be base64 encoded to
     # produce signature string
     sig = hashed.digest().encode("base64").rstrip('\n')
-    #sig = quote_plus(sig)
     return sig
 
 
@@ -179,21 +169,16 @@ def request_access_token():
     header_values = ''
 
     # build header values string
-    Authorization_Header = 'OAuth oauth_nonce="%s", oauth_callback="%s", oauth_signature_method="%s", oauth_timestamp="%s", oauth_consumer_key="%s", oauth_signature="%s", oauth_version="%s"' % (oauth_nonce, oauth_callback, oauth_signature_method, oauth_timestamp, oauth_consumer_key, oauth_signature, oauth_version)
+    Authorization_Header = 'OAuth oauth_nonce="%s", oauth_callback="%s", oauth_signature_method="%s", oauth_timestamp="%s", oauth_consumer_key="%s", oauth_signature="%s", oauth_version="%s"' % (
+        oauth_nonce, oauth_callback, oauth_signature_method, oauth_timestamp, oauth_consumer_key, oauth_signature, oauth_version)
 
     # instantiate header dict
     headers = {}
     headers["Authorization"] = str(Authorization_Header)
 
-    #url = get_sig_and_header["BaseURL"]
     url = "https://api.twitter.com/oauth/request_token"
 
     # POST request for request_token
     r = requests.post(url, headers=headers)
 
     return r.text
-
-
-if __name__ == '__main__':
-    request_access_token()
-
